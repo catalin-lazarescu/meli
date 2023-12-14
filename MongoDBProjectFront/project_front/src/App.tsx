@@ -50,13 +50,15 @@ interface EditMovie {
 const moviesPerPage = 10;
 
 function App() {
+  
   const [movies, setMovies] = useState<Movie[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [detailedMovieInfo, setDetailedMovieInfo] = useState<Movie | null>(null);
   const [editedMovieInfo, setEditedMovieInfo] = useState<EditMovie | null>(null);
-
+  const [isSaveChangesOpen, setIsSaveChangesOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [minRating, setMinRating] = useState(0);
@@ -65,15 +67,23 @@ function App() {
   const [ratingFilter, setRatingFilter] = useState([minRating, maxRating]);
 
   const [genreFilter, setGenreFilter] = useState<string[]>([]);
+  const [maxPageNumber, setMaxPageNumber] = useState(0);
+
 
   useEffect(() => {
     setIsLoading(true);
     fetch('http://localhost:5284/movies')
-      .then((response) => response.json())
-      .then((data) => {
-        setMovies(data);
-        setIsLoading(false);
-      });
+    .then((response) => response.json())
+    .then((totalMovies) => {
+      setMaxPageNumber(Math.ceil(totalMovies / moviesPerPage));
+      // Use maxPageNumber for pagination
+      fetch(`http://localhost:5284/movies/0`)
+        .then((response) => response.json())
+        .then((data) => {
+          setMovies(data);
+          setIsLoading(false);
+        });
+    });
 
     fetch('http://localhost:5284/movies/filter/boundaries')
       .then((response) => response.json())
@@ -86,16 +96,25 @@ function App() {
 
   const indexOfLastMovie = currentPage * moviesPerPage;
   const indexOfFirstMovie = indexOfLastMovie - moviesPerPage;
-  const [currentMovies, setCurrentMovies] = useState(movies.slice(indexOfFirstMovie, indexOfLastMovie));
+  const [currentMovies, setCurrentMovies] = useState(movies.slice(1, 10));
 
   useEffect(()=>{
     const indexOfLastMovie = currentPage * moviesPerPage;
     const indexOfFirstMovie = indexOfLastMovie - moviesPerPage;
-    setCurrentMovies(movies.slice(indexOfFirstMovie, indexOfLastMovie));
+    setCurrentMovies(movies.slice(1, 10));
   }, [movies])
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    setCurrentPage(value);
+  const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5284/movies/${value-1}`);
+      const data = await response.json();
+      setMovies(data);
+      setIsLoading(false);
+      setCurrentPage(value);
+    } catch (error) {
+      console.error('Failed to fetch movies:', error);
+    }
   };
 
   const openPopup = async (movie: Movie) => {
@@ -207,28 +226,6 @@ function App() {
     setIsPopupOpen(false);
   };
 
-  const applyFilters = () => {
-    setIsLoading(true);
-    fetch(`http://localhost:5284/movies/filter?minRating=${ratingFilter[0]}&maxRating=${ratingFilter[1]}&genres=${genreFilter.join(',')}`)
-        .then((response) => response.json())
-        .then((data) => {
-            setMovies(data);
-            setIsLoading(false);
-        });
-  };
-  
-  const resetFilters = () => {
-    setRatingFilter([minRating, maxRating]);
-    setGenreFilter([]);
-    setIsLoading(true);
-    fetch('http://localhost:5284/movies')
-        .then((response) => response.json())
-        .then((data) => {
-            setMovies(data);
-            setIsLoading(false);
-        });
-  };
-
   return (
     <Stack sx={{minWidth: '100%'}} flexDirection="row" className="App">
       <Box sx={{ flexGrow: 1 }}>
@@ -280,7 +277,7 @@ function App() {
                 </Grid>
                 {!isLoading && 
                 <Pagination
-                  count={Math.ceil(movies.length / moviesPerPage)}
+                  count={maxPageNumber}
                   page={currentPage}
                   onChange={handlePageChange}
                   color="primary"
@@ -377,6 +374,47 @@ function App() {
                   </Button>
                 </DialogActions>
               </Dialog>
+              <Dialog
+          open={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+        >
+          <DialogTitle>Confirm</DialogTitle>
+          <DialogContent>
+            <DialogContent>
+              Are you sure you want to delete this movie?
+            </DialogContent>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsDeleteOpen(false)} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              try {
+                const response = await fetch(`http://localhost:5284/movies/${editedMovieInfo?.id}`, {
+                  method: 'DELETE',
+                });
+                if (!response.ok) {
+                  throw new Error('Failed to delete movie');
+                }
+                // Optionally, you can update the state or perform other actions after successful deletion
+                setIsPopupOpen(false);
+                setIsLoading(true);
+                fetch(`http://localhost:5284/movies/0`)
+                  .then((response) => response.json())
+                  .then((data) => {
+                    setMovies(data);
+                    setIsLoading(false);
+                  });
+              } catch (error) {
+                console.error(error);
+                // Handle error, e.g., show an error message
+              }
+              setIsDeleteOpen(false);
+            }} color="primary">
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
             </Box>
           </Grid>
           <Grid item sm={2} sx={{ height: 1, width: 1, position: 'fixed', right: 0, padding: 2 }}>

@@ -21,9 +21,17 @@ namespace MongoDBProject.Services
             _moviesCollection = mongoDatabase.GetCollection<Movie>(
                 moviesDatabaseSettings.Value.MoviesCollectionName);
         }
+        public long GetAsync() =>
+            _moviesCollection.CountDocuments(Builders<Movie>.Filter.And(
+                Builders<Movie>.Filter.Type(m => m.Imdb.Rating, BsonType.Double),
+                Builders<Movie>.Filter.Type(m => m.Imdb.Votes, BsonType.Int32)
+                ));
 
-        public async Task<List<Movie>> GetAsync() =>
-            await _moviesCollection.Find(_ => true).Limit(100).ToListAsync();
+        public async Task<List<Movie>> GetAsync(int skip) =>
+        await _moviesCollection.Find(Builders<Movie>.Filter.And(
+            Builders<Movie>.Filter.Type(m => m.Imdb.Rating, BsonType.Double),
+            Builders<Movie>.Filter.Type(m => m.Imdb.Votes, BsonType.Int32)
+            )).Skip(skip*10).Limit(10).ToListAsync();
 
         public async Task<Movie?> GetAsync(string id) =>
             await _moviesCollection.Find(x => x.Id == id).FirstOrDefaultAsync();

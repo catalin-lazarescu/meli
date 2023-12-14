@@ -16,8 +16,8 @@ namespace MongoDBProject.Controllers
             _moviesService = moviesService;
 
         [HttpGet]
-        public async Task<List<Movie>> Get() =>
-            await _moviesService.GetAsync();
+        public long Get() =>
+            _moviesService.GetAsync();
 
         [HttpGet("{id:length(24)}")]
         public async Task<ActionResult<Movie>> Get(string id)
@@ -31,6 +31,10 @@ namespace MongoDBProject.Controllers
 
             return movie;
         }
+
+        [HttpGet("{skip}")]
+        public async Task<List<Movie>> Get(int skip) =>
+            await _moviesService.GetAsync(skip);
 
         [HttpPost]
         public async Task<IActionResult> Post(Movie newMovie)
