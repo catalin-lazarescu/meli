@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Facultate\\Meli\\MongoDBProject\\MongoDBProject.csproj": {}
+    "C:\\Users\\Melinda\\Desktop\\AnIV_SemI\\DBD\\Lab\\Assignment9\\Proj\\MongoDBProject\\MongoDBProject.csproj": {}
   },
   "projects": {
-    "D:\\Facultate\\Meli\\MongoDBProject\\MongoDBProject.csproj": {
+    "C:\\Users\\Melinda\\Desktop\\AnIV_SemI\\DBD\\Lab\\Assignment9\\Proj\\MongoDBProject\\MongoDBProject.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Facultate\\Meli\\MongoDBProject\\MongoDBProject.csproj",
+        "projectUniqueName": "C:\\Users\\Melinda\\Desktop\\AnIV_SemI\\DBD\\Lab\\Assignment9\\Proj\\MongoDBProject\\MongoDBProject.csproj",
         "projectName": "MongoDBProject",
-        "projectPath": "D:\\Facultate\\Meli\\MongoDBProject\\MongoDBProject.csproj",
-        "packagesPath": "C:\\Users\\Catalin\\.nuget\\packages\\",
-        "outputPath": "D:\\Facultate\\Meli\\MongoDBProject\\obj\\",
+        "projectPath": "C:\\Users\\Melinda\\Desktop\\AnIV_SemI\\DBD\\Lab\\Assignment9\\Proj\\MongoDBProject\\MongoDBProject.csproj",
+        "packagesPath": "C:\\Users\\Melinda\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Melinda\\Desktop\\AnIV_SemI\\DBD\\Lab\\Assignment9\\Proj\\MongoDBProject\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Catalin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Melinda\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -39,24 +39,6 @@
       "frameworks": {
         "net6.0": {
           "targetAlias": "net6.0",
-          "dependencies": {
-            "MongoDB.Bson": {
-              "target": "Package",
-              "version": "[2.23.0, )"
-            },
-            "MongoDB.Driver": {
-              "target": "Package",
-              "version": "[2.23.0, )"
-            },
-            "MongoDB.Driver.Core": {
-              "target": "Package",
-              "version": "[2.23.0, )"
-            },
-            "Swashbuckle.AspNetCore": {
-              "target": "Package",
-              "version": "[6.2.3, )"
-            }
-          },
           "imports": [
             "net461",
             "net462",
@@ -67,15 +49,7 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "frameworkReferences": {
-            "Microsoft.AspNetCore.App": {
-              "privateAssets": "none"
-            },
-            "Microsoft.NETCore.App": {
-              "privateAssets": "all"
-            }
-          },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.412\\RuntimeIdentifierGraph.json"
         }
       }
     }

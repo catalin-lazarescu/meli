@@ -87,7 +87,7 @@ function App() {
     // You can use a prompt to get the new item from the user.
     const newItem = prompt(`Enter new ${field}`);
     if (newItem) {
-      setDetailedMovieInfo((prevInfo) => {
+      setDetailedMovieInfo((prevInfo: any) => {
         if (!prevInfo) return null;
         let updatedField;
         if (Array.isArray(prevInfo[field])) {
@@ -101,7 +101,7 @@ function App() {
   };
   
   const handleDelete = (field: keyof Movie, index: number) => {
-    setDetailedMovieInfo((prevInfo) => {
+    setDetailedMovieInfo((prevInfo: any) => {
       if (!prevInfo) return null;
       return {
         ...prevInfo,
@@ -111,7 +111,7 @@ function App() {
   };
 
   const handleInputChange = (field: keyof Movie, value: string | number | string[] | { rating: string, votes: string }) => {
-    setDetailedMovieInfo((prevInfo) => ({
+    setDetailedMovieInfo((prevInfo: any) => ({
       ...prevInfo,
       [field]: value,
       id: prevInfo?.id || '',
@@ -120,7 +120,7 @@ function App() {
       cast: field === 'cast' && Array.isArray(value) ? value : (prevInfo?.cast || []),
       plot: field === 'plot' && typeof value === 'string' ? value : (prevInfo?.plot || ''),
       directors: field === 'directors' && Array.isArray(value) ? value : (prevInfo?.directors || []),
-      imdb: field === 'imdb' && typeof value === 'object' && 'rating' in value && 'votes' in value ? value : prevInfo?.imdb || { rating: '', votes: '' }),
+      imdb: field === 'imdb' && typeof value === 'object' && 'rating' in value && 'votes' in value ? value : prevInfo?.imdb || { rating: '', votes: '' },
     }));
   };
 
@@ -274,14 +274,14 @@ function App() {
           <Button onClick={() => handleAdd('directors')}>Add Directors</Button>
           <TextField
             label="IMDB Rating"
-            value={detailedMovieInfo?.imdb.rating || 0}
+            value={detailedMovieInfo?.imdb.rating || ''}
             onChange={(e) => handleInputChange('imdb', { rating: String(e.target.value) || '', votes: String(detailedMovieInfo?.imdb.votes) || '' })}
             fullWidth
             margin="normal"
           />
           <TextField
             label="IMDB Votes"
-            value={detailedMovieInfo?.imdb.votes || 0}
+            value={detailedMovieInfo?.imdb.votes || ''}
             onChange={(e) => handleInputChange('imdb', { rating: String(detailedMovieInfo?.imdb.rating) || '', votes: String(e.target.value) || '' })}
             fullWidth
             margin="normal"
