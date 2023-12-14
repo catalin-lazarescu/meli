@@ -33,11 +33,10 @@ namespace MongoDBProject.Models
     
     public class Imdb
     {
-        [BsonRepresentation(BsonType.Double)]
         [BsonElement("rating")]
         [BsonIgnoreIfNull]
         [BsonDefaultValue(0)]
-        public double? Rating { get; set; } = null!;
+        public double Rating { get; set; }
         [BsonIgnoreIfNull]
         [BsonElement("votes")]
         public int? Votes { get; set; }

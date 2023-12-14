@@ -47,32 +47,50 @@ interface EditMovie {
 const moviesPerPage = 10;
 
 function App() {
+  
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [detailedMovieInfo, setDetailedMovieInfo] = useState<Movie | null>(null);
   const [editedMovieInfo, setEditedMovieInfo] = useState<EditMovie | null>(null);
-
+  const [isSaveChangesOpen, setIsSaveChangesOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [maxPageNumber, setMaxPageNumber] = useState(0);
+
 
   useEffect(() => {
     setIsLoading(true);
     fetch('http://localhost:5284/movies')
-      .then((response) => response.json())
-      .then((data) => {
-        setMovies(data);
-        setIsLoading(false);
-      });
+    .then((response) => response.json())
+    .then((totalMovies) => {
+      setMaxPageNumber(Math.ceil(totalMovies / moviesPerPage));
+      // Use maxPageNumber for pagination
+      fetch(`http://localhost:5284/movies/0`)
+        .then((response) => response.json())
+        .then((data) => {
+          setMovies(data);
+          setIsLoading(false);
+        });
+    });
   }, []);
 
   const indexOfLastMovie = currentPage * moviesPerPage;
   const indexOfFirstMovie = indexOfLastMovie - moviesPerPage;
-  const currentMovies = movies.slice(indexOfFirstMovie, indexOfLastMovie);
+  const currentMovies = movies.slice(1, 10);
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    setCurrentPage(value);
+  const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5284/movies/${value-1}`);
+      const data = await response.json();
+      setMovies(data);
+      setIsLoading(false);
+      setCurrentPage(value);
+    } catch (error) {
+      console.error('Failed to fetch movies:', error);
+    }
   };
 
   const openPopup = async (movie: Movie) => {
@@ -138,45 +156,13 @@ function App() {
 
 
   };
-  const saveChanges = async () => {
 
-    try {
-      const response = await fetch(`http://localhost:5284/movies/${editedMovieInfo?.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...editedMovieInfo,
-          imdb: {
-            ...editedMovieInfo?.imdb,
-            rating: Number(editedMovieInfo?.imdb.rating),
-            votes: Number(editedMovieInfo?.imdb.votes)
-          }
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save changes');
-      }
-
-      // Optionally, you can update the state or perform other actions after successful save
-      // For example, you can refetch the updated movie details
-
-      setIsPopupOpen(false);
-
-      setIsLoading(true);
-      fetch('http://localhost:5284/movies')
-        .then((response) => response.json())
-        .then((data) => {
-          setMovies(data);
-          setIsLoading(false);
-        });
- 
-    } catch (error) {
-      console.error(error);
-      // Handle error, e.g., show an error message
-    }
+  const saveChanges = () => {
+    setIsSaveChangesOpen(true);
+  };
+  
+  const deleteMovie = () => {
+    setIsDeleteOpen(true);
   };
 
   const closePopup = () => {
@@ -221,7 +207,7 @@ function App() {
         </Grid>
         {!isLoading && 
         <Pagination
-          count={Math.ceil(movies.length / moviesPerPage)}
+          count={maxPageNumber}
           page={currentPage}
           onChange={handlePageChange}
           color="primary"
@@ -236,7 +222,6 @@ function App() {
         />
       }
       </header>
-
       <Dialog open={isPopupOpen} onClose={closePopup} >
         <DialogTitle>Edit Movie: {editedMovieInfo?.title}</DialogTitle>
         <DialogContent>
@@ -316,9 +301,111 @@ function App() {
           <Button onClick={closePopup} color="primary">
             Close
           </Button>
+          <Button onClick={deleteMovie} color="secondary">
+            Delete Movie
+          </Button>
         </DialogActions>
       </Dialog>
-      
+      <Dialog
+          open={isSaveChangesOpen}
+          onClose={() => setIsSaveChangesOpen(false)}
+        >
+          <DialogTitle>Confirm</DialogTitle>
+          <DialogContent>
+            <DialogContent>
+              Are you sure you want to save changes?
+            </DialogContent>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsSaveChangesOpen(false)} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              try {
+                const response = await fetch(`http://localhost:5284/movies/${editedMovieInfo?.id}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    ...editedMovieInfo,
+                    imdb: {
+                      ...editedMovieInfo?.imdb,
+                      rating: Number(editedMovieInfo?.imdb.rating),
+                      votes: Number(editedMovieInfo?.imdb.votes)
+                    }
+                  }),
+                });
+          
+                if (!response.ok) {
+                  throw new Error('Failed to save changes');
+                }
+          
+                // Optionally, you can update the state or perform other actions after successful save
+                // For example, you can refetch the updated movie details
+          
+                setIsPopupOpen(false);
+          
+                setIsLoading(true);
+                fetch(`http://localhost:5284/movies/0`)
+                  .then((response) => response.json())
+                  .then((data) => {
+                    setMovies(data);
+                    setIsLoading(false);
+                  });
+           
+              } catch (error) {
+                console.error(error);
+                // Handle error, e.g., show an error message
+              }
+              setIsSaveChangesOpen(false);
+            }} color="primary">
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+        >
+          <DialogTitle>Confirm</DialogTitle>
+          <DialogContent>
+            <DialogContent>
+              Are you sure you want to delete this movie?
+            </DialogContent>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsDeleteOpen(false)} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              try {
+                const response = await fetch(`http://localhost:5284/movies/${editedMovieInfo?.id}`, {
+                  method: 'DELETE',
+                });
+                if (!response.ok) {
+                  throw new Error('Failed to delete movie');
+                }
+                // Optionally, you can update the state or perform other actions after successful deletion
+                setIsPopupOpen(false);
+                setIsLoading(true);
+                fetch(`http://localhost:5284/movies/0`)
+                  .then((response) => response.json())
+                  .then((data) => {
+                    setMovies(data);
+                    setIsLoading(false);
+                  });
+              } catch (error) {
+                console.error(error);
+                // Handle error, e.g., show an error message
+              }
+              setIsDeleteOpen(false);
+            }} color="primary">
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
     </Box>
   );
 }
