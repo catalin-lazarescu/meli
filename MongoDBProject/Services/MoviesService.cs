@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDBProject.Models;
 
@@ -22,7 +23,7 @@ namespace MongoDBProject.Services
         }
 
         public async Task<List<Movie>> GetAsync() =>
-            await _moviesCollection.Find(_ => true).Limit(50).ToListAsync();
+            await _moviesCollection.Find(_ => true).Limit(100).ToListAsync();
 
         public async Task<Movie?> GetAsync(string id) =>
             await _moviesCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
@@ -35,5 +36,26 @@ namespace MongoDBProject.Services
 
         public async Task RemoveAsync(string id) =>
             await _moviesCollection.DeleteOneAsync(x => x.Id == id);
+
+        public async Task<List<Movie>> GetFilteredAsync(double minRating, double maxRating, List<string> genres)
+        {
+            var builder = Builders<Movie>.Filter;
+            var filter = builder.Gte("Imdb.Rating", minRating) & builder.Lte("Imdb.Rating", maxRating) & builder.In("Genres", genres);
+            return await _moviesCollection.Find(filter).ToListAsync();
+        }
+
+        public async Task<FilterBoundaries> GetFilterBoundariesAsync()
+        {
+            var minRating = await _moviesCollection.Find(_ => true).SortBy(m => m.Imdb.Rating).Limit(1).FirstOrDefaultAsync();
+            var maxRating = await _moviesCollection.Find(_ => true).SortByDescending(m => m.Imdb.Rating).Limit(1).FirstOrDefaultAsync();
+            var genres = await _moviesCollection.Distinct<string>("Genres", new BsonDocument()).ToListAsync();
+
+            return new FilterBoundaries
+            {
+                MinRating = minRating.Imdb.Rating ?? 0.0,
+                MaxRating = maxRating.Imdb.Rating ?? 10.0,
+                Genres = genres
+            };
+        }
     }
 }

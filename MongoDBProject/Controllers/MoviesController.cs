@@ -71,6 +71,17 @@ namespace MongoDBProject.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("filter")]
+        public async Task<ActionResult<List<Movie>>> GetFiltered(double minRating, double maxRating, [FromQuery] List<string> genres) =>
+            await _moviesService.GetFilteredAsync(minRating, maxRating, genres);
+
+        [HttpGet("filter/boundaries")]
+        public async Task<ActionResult<FilterBoundaries>> GetFilterBoundaries() =>
+            await _moviesService.GetFilterBoundariesAsync();
     }
 }
+
+
+
 
