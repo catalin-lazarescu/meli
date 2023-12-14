@@ -22,7 +22,7 @@ namespace MongoDBProject.Services
         }
 
         public async Task<List<Movie>> GetAsync() =>
-            await _moviesCollection.Find(_ => true).ToListAsync();
+            await _moviesCollection.Find(_ => true).Limit(50).ToListAsync();
 
         public async Task<Movie?> GetAsync(string id) =>
             await _moviesCollection.Find(x => x.Id == id).FirstOrDefaultAsync();

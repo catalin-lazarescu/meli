@@ -31,6 +31,18 @@ interface Movie {
     votes: number;
   };
 }
+interface EditMovie {
+  id: string;
+  title: string;
+  genres: string[];
+  cast: string[];
+  plot: string;
+  directors: string[];
+  imdb: {
+    rating: string;
+    votes: number;
+  };
+}
 
 const moviesPerPage = 10;
 
@@ -39,7 +51,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [detailedMovieInfo, setDetailedMovieInfo] = useState<Movie | null>(null);
-  const [editedMovieInfo, setEditedMovieInfo] = useState<Movie | null>(null);
+  const [editedMovieInfo, setEditedMovieInfo] = useState<EditMovie | null>(null);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,6 +82,7 @@ function App() {
       fetch(`http://localhost:5284/movies/${movie.id}`)
         .then((response) => response.json())
         .then((data) => {
+          setEditedMovieInfo(data);
           setDetailedMovieInfo(data);
           setIsLoading(false);
         });
@@ -122,16 +135,25 @@ function App() {
       directors: field === 'directors' && Array.isArray(value) ? value : (prevInfo?.directors || []),
       imdb: field === 'imdb' && typeof value === 'object' && 'rating' in value && 'votes' in value ? value : prevInfo?.imdb || { rating: '', votes: '' },
     }));
-  };
 
+
+  };
   const saveChanges = async () => {
+
     try {
-      const response = await fetch(`http://localhost:5284/movies/${detailedMovieInfo?.id}`, {
+      const response = await fetch(`http://localhost:5284/movies/${editedMovieInfo?.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(detailedMovieInfo),
+        body: JSON.stringify({
+          ...editedMovieInfo,
+          imdb: {
+            ...editedMovieInfo?.imdb,
+            rating: Number(editedMovieInfo?.imdb.rating),
+            votes: Number(editedMovieInfo?.imdb.votes)
+          }
+        }),
       });
 
       if (!response.ok) {
@@ -216,18 +238,18 @@ function App() {
       </header>
 
       <Dialog open={isPopupOpen} onClose={closePopup} >
-        <DialogTitle>Edit Movie: {detailedMovieInfo?.title}</DialogTitle>
+        <DialogTitle>Edit Movie: {editedMovieInfo?.title}</DialogTitle>
         <DialogContent>
           <TextField
             label="ID"
-            value={detailedMovieInfo?.id || ''}
+            value={editedMovieInfo?.id || ''}
             disabled
             fullWidth
             margin="normal"
           />
           <TextField
             label="Title"
-            value={detailedMovieInfo?.title || ''}
+            value={editedMovieInfo?.title || ''}
             onChange={(e) => handleInputChange('title', e.target.value)}
             fullWidth
             margin="normal"
@@ -235,7 +257,7 @@ function App() {
           <Typography variant="body2" color="text.secondary">
             Genres
           </Typography>
-          {detailedMovieInfo?.genres.map((genre, index) => (
+          {editedMovieInfo?.genres.map((genre, index) => (
             <Chip
               key={index}
               label={genre}
@@ -246,7 +268,7 @@ function App() {
           <Typography variant="body2" color="text.secondary">
             Cast
           </Typography>
-          {detailedMovieInfo?.cast.map((cast, index) => (
+          {editedMovieInfo?.cast.map((cast, index) => (
             <Chip
               key={index}
               label={cast}
@@ -256,7 +278,7 @@ function App() {
           <Button onClick={() => handleAdd('cast')}>Add Cast</Button>
           <TextField
             label="Plot"
-            value={detailedMovieInfo?.plot || ''}
+            value={editedMovieInfo?.plot || ''}
             onChange={(e) => handleInputChange('plot', e.target.value)}
             fullWidth
             margin="normal"
@@ -264,7 +286,7 @@ function App() {
           <Typography variant="body2" color="text.secondary">
             Directors
           </Typography>
-          {detailedMovieInfo?.directors.map((directors, index) => (
+          {editedMovieInfo?.directors.map((directors, index) => (
             <Chip
               key={index}
               label={directors}
