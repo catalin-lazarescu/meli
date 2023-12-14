@@ -28,10 +28,56 @@ namespace MongoDBProject.Services
                 ));
 
         public async Task<List<Movie>> GetAsync(int skip) =>
-        await _moviesCollection.Find(Builders<Movie>.Filter.And(
-            Builders<Movie>.Filter.Type(m => m.Imdb.Rating, BsonType.Double),
-            Builders<Movie>.Filter.Type(m => m.Imdb.Votes, BsonType.Int32)
-            )).Skip(skip*10).Limit(10).ToListAsync();
+            await _moviesCollection.Find(Builders<Movie>.Filter.And(
+                Builders<Movie>.Filter.Type(m => m.Imdb.Rating, BsonType.Double),
+                Builders<Movie>.Filter.Type(m => m.Imdb.Votes, BsonType.Int32)
+                )).Skip(skip*10).Limit(10).ToListAsync();
+        public async Task<List<Movie>> GetAsync(int skip, string sort)
+        {
+            switch (sort)
+            {
+                case "A":
+                    {
+
+                        return await _moviesCollection.Find(Builders<Movie>.Filter.And(
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Rating, BsonType.Double),
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Votes, BsonType.Int32)
+                            )).SortBy(x => x.Title).Skip(skip * 10).Limit(10).ToListAsync();
+                    }
+                case "D":
+                    {
+
+                        return await _moviesCollection.Find(Builders<Movie>.Filter.And(
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Rating, BsonType.Double),
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Votes, BsonType.Int32)
+                            )).SortByDescending(x => x.Title).Skip(skip * 10).Limit(10).ToListAsync();
+                    }
+                case "RA":
+                    {
+
+                        return await _moviesCollection.Find(Builders<Movie>.Filter.And(
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Rating, BsonType.Double),
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Votes, BsonType.Int32)
+                            )).SortBy(x => x.Imdb.Rating).Skip(skip * 10).Limit(10).ToListAsync();
+                    }
+                case "RD":
+                    {
+
+                        return await _moviesCollection.Find(Builders<Movie>.Filter.And(
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Rating, BsonType.Double),
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Votes, BsonType.Int32)
+                            )).SortByDescending(x => x.Imdb.Rating).Skip(skip * 10).Limit(10).ToListAsync();
+                    }
+                default:
+                    {
+                        return await _moviesCollection.Find(Builders<Movie>.Filter.And(
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Rating, BsonType.Double),
+                            Builders<Movie>.Filter.Type(m => m.Imdb.Votes, BsonType.Int32)
+                            )).Skip(skip * 10).Limit(10).ToListAsync();
+                    }
+            }
+
+        }
 
         public async Task<Movie?> GetAsync(string id) =>
             await _moviesCollection.Find(x => x.Id == id).FirstOrDefaultAsync();

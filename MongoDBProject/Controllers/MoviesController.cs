@@ -75,6 +75,9 @@ namespace MongoDBProject.Controllers
 
             return NoContent();
         }
+        [HttpGet("sort")]
+        public async Task<List<Movie>> Get(int skip, string sort) =>
+            await _moviesService.GetAsync(skip, sort);
     }
 }
 

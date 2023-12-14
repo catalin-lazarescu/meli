@@ -58,8 +58,8 @@ function App() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [maxPageNumber, setMaxPageNumber] = useState(0);
-
-
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+ 
   useEffect(() => {
     setIsLoading(true);
     fetch('http://localhost:5284/movies')
@@ -78,7 +78,7 @@ function App() {
 
   const indexOfLastMovie = currentPage * moviesPerPage;
   const indexOfFirstMovie = indexOfLastMovie - moviesPerPage;
-  const currentMovies = movies.slice(1, 10);
+  const currentMovies = movies;
 
   const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
     setIsLoading(true);
@@ -112,6 +112,8 @@ function App() {
       // Handle error, e.g., show an error message
     }
   };
+
+
 
   const handleAdd = (field: keyof Movie) => {
     // Here you can implement the logic for adding a new item.
@@ -164,8 +166,50 @@ function App() {
   const deleteMovie = () => {
     setIsDeleteOpen(true);
   };
+  const addMovie = async () => {
+    try {
+      const response = await fetch('http://localhost:5284/movies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...editedMovieInfo,
+          imdb: {
+            ...editedMovieInfo?.imdb,
+            rating: Number(editedMovieInfo?.imdb.rating),
+            votes: Number(editedMovieInfo?.imdb.votes)
+          }
+        }),
+      });
+      setEditedMovieInfo(null);
+      if (!response.ok) {
+        throw new Error('Failed to add movie');
+      }
+      
+      // Optionally, you can update the state or perform other actions after successful addition
+      setIsAddDialogOpen(false);
+      setIsLoading(true);
+      fetch('http://localhost:5284/movies')
+      .then((response) => response.json())
+      .then((totalMovies) => {
+        setMaxPageNumber(Math.ceil(totalMovies / moviesPerPage));
+      });
+      fetch(`http://localhost:5284/movies/0`)
+        .then((response) => response.json())
+        .then((data) => {
+          setMovies(data);
+          setIsLoading(false);
+        });
+        setCurrentPage(1);
+    } catch (error) {
+      console.error(error);
+      // Handle error, e.g., show an error message
+    }
+  };
 
   const closePopup = () => {
+    setEditedMovieInfo(null);
     setSelectedMovie(null);
     setIsPopupOpen(false);
   };
@@ -336,18 +380,18 @@ function App() {
                     }
                   }),
                 });
-          
+                setEditedMovieInfo(null);
                 if (!response.ok) {
                   throw new Error('Failed to save changes');
                 }
-          
+                
                 // Optionally, you can update the state or perform other actions after successful save
                 // For example, you can refetch the updated movie details
           
                 setIsPopupOpen(false);
           
                 setIsLoading(true);
-                fetch(`http://localhost:5284/movies/0`)
+                fetch(`http://localhost:5284/movies/${currentPage-1}`)
                   .then((response) => response.json())
                   .then((data) => {
                     setMovies(data);
@@ -387,15 +431,23 @@ function App() {
                 if (!response.ok) {
                   throw new Error('Failed to delete movie');
                 }
+                setEditedMovieInfo(null);
                 // Optionally, you can update the state or perform other actions after successful deletion
                 setIsPopupOpen(false);
                 setIsLoading(true);
+                fetch('http://localhost:5284/movies')
+                .then((response) => response.json())
+                .then((totalMovies) => {
+                  setMaxPageNumber(Math.ceil(totalMovies / moviesPerPage));
+                });
+
                 fetch(`http://localhost:5284/movies/0`)
                   .then((response) => response.json())
                   .then((data) => {
                     setMovies(data);
                     setIsLoading(false);
                   });
+                  setCurrentPage(1);
               } catch (error) {
                 console.error(error);
                 // Handle error, e.g., show an error message
@@ -406,6 +458,88 @@ function App() {
             </Button>
           </DialogActions>
         </Dialog>
+        <Dialog open={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)}>
+        <DialogTitle>Add New Movie</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Title"
+            value={editedMovieInfo?.title || ''}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+          <Typography variant="body2" color="text.secondary">
+            Genres
+          </Typography>
+          {editedMovieInfo?.genres.map((genre, index) => (
+            <Chip
+              key={index}
+              label={genre}
+              onDelete={() => handleDelete('genres', index)}
+            />
+          ))}
+          <Button onClick={() => handleAdd('genres')}>Add Genre</Button>
+          <Typography variant="body2" color="text.secondary">
+            Cast
+          </Typography>
+          {editedMovieInfo?.cast.map((cast, index) => (
+            <Chip
+              key={index}
+              label={cast}
+              onDelete={() => handleDelete('cast', index)}
+            />
+          ))}
+          <Button onClick={() => handleAdd('cast')}>Add Cast</Button>
+          <TextField
+            label="Plot"
+            value={editedMovieInfo?.plot || ''}
+            onChange={(e) => handleInputChange('plot', e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+          <Typography variant="body2" color="text.secondary">
+            Directors
+          </Typography>
+          {editedMovieInfo?.directors.map((directors, index) => (
+            <Chip
+              key={index}
+              label={directors}
+              onDelete={() => handleDelete('directors', index)}
+            />
+          ))}
+          <Button onClick={() => handleAdd('directors')}>Add Directors</Button>
+          <TextField
+            label="IMDB Rating"
+            value={editedMovieInfo?.imdb.rating || ''}
+            onChange={(e) => handleInputChange('imdb', { rating: String(e.target.value) || '', votes: Number(editedMovieInfo?.imdb.votes) || 0 })}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="IMDB Votes"
+            value={editedMovieInfo?.imdb.votes || 0}
+            onChange={(e) => handleInputChange('imdb', { rating: String(editedMovieInfo?.imdb.rating) || '', votes: Number(e.target.value) || 0 })}
+            fullWidth
+            margin="normal"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsAddDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={addMovie} color="primary">
+            Add
+          </Button>
+        </DialogActions>
+      </Dialog>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setIsAddDialogOpen(true)}
+          style={{ position: 'fixed', bottom: '20px', right: '20px' }}
+        >
+          Add Movie
+        </Button>
     </Box>
   );
 }
